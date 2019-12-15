@@ -6,16 +6,23 @@ class LRZeroParser:
     def __init__(self, grammar):
         self.grammar = grammar
         self.states = []
+        self.goto_dict = {}  # {(state, term) : state}
 
     def step1(self):
         self.states.append(self.closure({Production('Z', ['.', 'S'])}))
         for state in self.states:
             for x in self.grammar.nonterminals.union(self.grammar.terminals):
                 print("goto( " + str(state.name) + " " + x + " )")
-                s = self.goto(state, x)
-                if len(s.productions) != 0 and s not in self.states:
-                    print(s)
-                    self.states.append(s)
+                result_state = self.goto(state, x)
+                if len(result_state.productions) != 0:
+                    # add key (state, x) with the corresponding value state.name to the goto_dict
+                    self.goto_dict[(state.name, x)] = result_state.name
+                    if result_state not in self.states:
+                        # add new state to the result if it is not already in the set
+                        print(result_state)
+                        self.states.append(result_state)
+
+        print("Goto is: " + str(self.goto_dict))
 
     def goto(self, state, X):
         """
