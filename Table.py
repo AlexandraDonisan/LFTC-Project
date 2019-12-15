@@ -1,6 +1,7 @@
 from prettytable import PrettyTable
 
 from Action import Action
+from ParseError import ParseError
 
 
 class ParseTable:
@@ -63,7 +64,8 @@ class ParseTable:
                     self.actions.append((Action.SHIFT,))
                 else:
                     # if the productions generated different actions, then an error has occurred
-                    raise Exception("Error in table")
+                    raise ParseError(f"Error parsing sequence. \n"
+                                     f"There are Action conflicts in the table for state {state.name}")
         return self.actions
 
     def print_table(self):
@@ -83,14 +85,14 @@ class ParseTable:
                 continue
             table_action_names.append(action[0].name)
 
-        for i in range(len(table_headers)):
-            row = [table_state_names[i], table_action_names[i], " ", " ", " ", " ", " "]
+        for i in range(len(self.states)):
+            row = [table_state_names[i], table_action_names[i]]
+            [row.append("") for _ in self.terms]
             for index, term in enumerate(self.terms):
                 try:
                     row[index + 2] = self.goto_dict[(table_state_names[i], term)]
                 except KeyError:
                     pass
-
             table.add_row(row)
         print(table)
 

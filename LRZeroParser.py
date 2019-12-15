@@ -106,7 +106,11 @@ class LRZeroParser:
                 try:
                     goto_state = self.goto_dict[(top_work[1], top_input)]
                 except KeyError:
-                    raise ParseError("Could not find goto({top_work[1]}, {top_input})")
+                    input_string = "".join(input_stack[::-1])
+                    raise ParseError(f"Error parsing sequence. \n"
+                                     f"Could not find goto({top_work[1]}, {top_input}). \n"
+                                     f"Parser stopped at {input_string}. \n"
+                                     f"Resulting output band is {output_band}")
                 work_stack.append((top_input, goto_state))
                 input_stack = input_stack[:-1]
             elif self.actions[top_work[1]][0] == Action.REDUCE:
