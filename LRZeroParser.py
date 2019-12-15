@@ -90,10 +90,6 @@ class LRZeroParser:
         Parse input and return list of productions used to generate the input sequence
         :return: output_band: List<Int>
         """
-        self.goto_dict = {(0, 'S'): 1, (0, 'a'): 2, (2, 'A'): 3, (2, 'b'): 4,
-                     (2, 'c'): 5, (4, 'A'): 6, (4, 'b'): 4, (4, 'c'): 5}
-        self.actions = [(Action.SHIFT,), (Action.ACCEPT, ), (Action.SHIFT,), (Action.REDUCE, 0),
-                   (Action.SHIFT,), (Action.REDUCE, 2), (Action.REDUCE, 1)]
         # initialize table
         table = PrettyTable()
         table.field_names = ["Work Stack", "Input Stack", "Output Band"]
