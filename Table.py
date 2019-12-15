@@ -1,11 +1,6 @@
-from enum import Enum
 from prettytable import PrettyTable
 
-
-class Action(Enum):
-    SHIFT = 1
-    REDUCE = 2
-    ACCEPT = 3
+from Action import Action
 
 
 class ParseTable:

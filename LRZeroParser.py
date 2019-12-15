@@ -1,7 +1,7 @@
 from ParseError import ParseError
 from Production import Production
 from State import State
-from Table import Action
+from Table import Action, ParseTable
 from prettytable import PrettyTable
 
 
@@ -11,12 +11,12 @@ class LRZeroParser:
         self.grammar = grammar
         self.states = []
         self.goto_dict = {}  # {(state, term) : state}
+        self.actions = []   # List<(Action, )>
 
     def step1(self):
         self.states.append(self.closure({Production('Z', ['.', 'S'])}))
         for state in self.states:
             for x in self.grammar.nonterminals.union(self.grammar.terminals):
-                print("goto( " + str(state.name) + " " + x + " )")
                 result_state = self.goto(state, x)
                 if len(result_state.productions) != 0:
                     # add key (state, x) with the corresponding value state.name to the goto_dict
@@ -70,12 +70,17 @@ class LRZeroParser:
         state.name = len(self.states)
         return state
 
+    def step2(self):
+        parse_table = ParseTable(self.grammar, self.states, self.goto_dict)
+        self.actions = parse_table.construct()
+        parse_table.print_table()
+
     @staticmethod
     def add_table_row(table, work_stack, input_stack, output_band):
         if len(output_band) == 0:
             output_band_print = 'E'
         else:
-            output_band_print = "".join([str(elem) for elem in output_band])
+            output_band_print = "".join([str(elem) for elem in output_band[::-1]])
         table.add_row(["".join(map(lambda pair: pair[0] + str(pair[1]), work_stack)),
                        "".join(input_stack[::-1]),
                        output_band_print])
@@ -99,9 +104,6 @@ class LRZeroParser:
         output_band = []    # list of production numbers
         while True:
             self.add_table_row(table, work_stack, input_stack, output_band)
-            print("work_stack: " + str(work_stack))
-            print("input_stack: " + str(input_stack))
-            print("output_band: " + str(output_band))
             top_work = work_stack[-1]
             if self.actions[top_work[1]][0] == Action.SHIFT:
                 top_input = input_stack[-1]
@@ -125,7 +127,6 @@ class LRZeroParser:
                 work_stack.append((production.lhs, goto_lhs))
                 output_band.append(production_number)
             elif self.actions[top_work[1]][0] == Action.ACCEPT:
-                print("Finished parsing, resulting output band: " + str(output_band[::-1]))
+                print(table)
                 break
-        print(table)
         return output_band[::-1]
