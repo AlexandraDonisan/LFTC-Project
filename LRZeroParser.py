@@ -1,9 +1,13 @@
+from ParseError import ParseError
 from Production import Production
 from State import State
+from Table import Action
+from prettytable import PrettyTable
 
 
 class LRZeroParser:
-    def __init__(self, grammar):
+    def __init__(self, grammar, input_string):
+        self.input_string = input_string
         self.grammar = grammar
         self.states = []
         self.goto_dict = {}  # {(state, term) : state}
@@ -65,3 +69,63 @@ class LRZeroParser:
         # create new state
         state.name = len(self.states)
         return state
+
+    @staticmethod
+    def add_table_row(table, work_stack, input_stack, output_band):
+        if len(output_band) == 0:
+            output_band_print = 'E'
+        else:
+            output_band_print = "".join([str(elem) for elem in output_band])
+        table.add_row(["".join(map(lambda pair: pair[0] + str(pair[1]), work_stack)),
+                       "".join(input_stack[::-1]),
+                       output_band_print])
+
+    def step3(self):
+        """
+        Parse input and return list of productions used to generate the input sequence
+        :return: output_band: List<Int>
+        """
+        self.goto_dict = {(0, 'S'): 1, (0, 'a'): 2, (2, 'A'): 3, (2, 'b'): 4,
+                     (2, 'c'): 5, (4, 'A'): 6, (4, 'b'): 4, (4, 'c'): 5}
+        self.actions = [(Action.SHIFT,), (Action.ACCEPT, ), (Action.SHIFT,), (Action.REDUCE, 0),
+                   (Action.SHIFT,), (Action.REDUCE, 2), (Action.REDUCE, 1)]
+        # initialize table
+        table = PrettyTable()
+        table.field_names = ["Work Stack", "Input Stack", "Output Band"]
+        # initialize working, input stacks and output band
+        work_stack = [('$', 0)]    # list of tuple (character from grammar, state number)
+        input_stack = [char for char in self.input_string[::-1]]  # list of characters from grammar
+        input_stack.insert(0, '$')
+        output_band = []    # list of production numbers
+        while True:
+            self.add_table_row(table, work_stack, input_stack, output_band)
+            print("work_stack: " + str(work_stack))
+            print("input_stack: " + str(input_stack))
+            print("output_band: " + str(output_band))
+            top_work = work_stack[-1]
+            if self.actions[top_work[1]][0] == Action.SHIFT:
+                top_input = input_stack[-1]
+                try:
+                    goto_state = self.goto_dict[(top_work[1], top_input)]
+                except KeyError:
+                    raise ParseError("Could not find goto({top_work[1]}, {top_input})")
+                work_stack.append((top_input, goto_state))
+                input_stack = input_stack[:-1]
+            elif self.actions[top_work[1]][0] == Action.REDUCE:
+                production_number = self.actions[top_work[1]][1]
+                production = self.grammar.productions[production_number]
+                work_characters = map(lambda pair: pair[0], work_stack)
+                rhs = "".join(production.rhs)
+                work_sequence = "".join(work_characters)
+                index = work_sequence.index(rhs)
+                # remove tuples matching production
+                work_stack = work_stack[:index]
+                # add tuple matching rhs of production used in reduce
+                goto_lhs = self.goto_dict[(work_stack[-1][1], production.lhs)]
+                work_stack.append((production.lhs, goto_lhs))
+                output_band.append(production_number)
+            elif self.actions[top_work[1]][0] == Action.ACCEPT:
+                print("Finished parsing, resulting output band: " + str(output_band[::-1]))
+                break
+        print(table)
+        return output_band[::-1]

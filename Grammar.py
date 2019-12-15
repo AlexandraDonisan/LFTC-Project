@@ -8,7 +8,7 @@ class Grammar:
         # set of terminals
         self.terminals = set()
         # set of Productions
-        self.productions = set()
+        self.productions = []
         # initial symbol
         self.initial_symbol = None
         # epsilon symbol
