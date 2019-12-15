@@ -8,11 +8,12 @@ class Grammar:
         # set of terminals
         self.terminals = set()
         # set of Productions
-        self.productions = set()
+        self.productions = []
         # initial symbol
         self.initial_symbol = None
         # epsilon symbol
         self.epsilon = "@"
+        self.enhanced_grammar_symbol = 'Z'
 
     def get_non_terminal_productions(self, non_terminal) -> set:
         """
