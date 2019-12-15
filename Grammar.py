@@ -13,6 +13,7 @@ class Grammar:
         self.initial_symbol = None
         # epsilon symbol
         self.epsilon = "@"
+        self.enhanced_grammar_symbol = 'Z'
 
     def get_non_terminal_productions(self, non_terminal) -> set:
         """

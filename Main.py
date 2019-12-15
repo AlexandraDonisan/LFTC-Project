@@ -1,4 +1,5 @@
 from Grammar import Grammar
+from Table import ParseTable
 from LRZeroParser import LRZeroParser
 from Production import Production
 
@@ -20,6 +21,11 @@ def main():
     #     print(state)
 
     parser.step3()
+
+    parse_table = ParseTable(grammar, parser.states, parser.goto_dict)
+    actions = parse_table.construct()
+    # print(actions)
+    print(parse_table.print_table())
 
 
 main()
