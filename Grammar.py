@@ -1,3 +1,5 @@
+import json
+
 from Production import Production
 
 
@@ -28,13 +30,25 @@ class Grammar:
                 result.add(Production(production.lhs, production.rhs, add_dot=True))
         return result
 
+    def read_file(self, filename) -> None:
+        with open(filename) as json_data:
+            data = json.load(json_data)
+            self.nonterminals = set(data["nonterminals"])
+            self.terminals = set(data["terminals"])
+            for nonterminal in self.nonterminals:
+                for rhs in data["productions"][nonterminal]:
+                    production = Production(nonterminal, rhs.split())
+                    self.productions.append(production)
+            self.initial_symbol = data["initial_symbol"]
+
     def __str__(self) -> str:
         result = "Nonterminals: "
         result += str(self.nonterminals)
         result += "\nTerminals: "
         result += str(self.terminals)
         result += "\nProductions: "
-        for production in self.productions:
+        for index, production in enumerate(self.productions):
+            result += str(index) + ": "
             result += str(production)
             result += ",\n"
         if len(self.productions) > 0:

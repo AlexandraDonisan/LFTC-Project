@@ -1,0 +1,14 @@
+{
+  "nonterminals": ["program", "list_stmt", "stmt", "assign_stmt", "identifier", "identifier",
+                    "letter"],
+  "terminals": ["begin", "is", "a", "b", "c", "x", "y", "z"],
+  "productions": {
+    "program": ["begin list_stmt"],
+    "list_stmt": ["stmt", "stmt, list_stmt"],
+    "stmt": ["assign_stmt"],
+    "assign_stmt": ["identifier is identifier"],
+    "identifier": ["letter"],
+    "letter": ["a", "b", "c", "x", "y", "z"]
+  },
+  "initial_symbol": "program"
+}

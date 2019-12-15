@@ -18,14 +18,15 @@ class Production:
         """
         return self.rhs[-1] == '.'
 
-    def has_non_terminal(self) -> chr:
+    def has_non_terminal(self, grammar) -> chr:
         """
         Return non_terminal after dot or None otherwise
         :return: [A-Z] or None
         """
         index_of_dot = self.rhs.index('.')
-        if re.match("[A-Z]", self.rhs[index_of_dot + 1]):
+        if self.rhs[index_of_dot + 1] in grammar.nonterminals:
             return self.rhs[index_of_dot + 1]
+        # if re.match("[A-Z]", self.rhs[index_of_dot + 1]):
         return None
 
     def has_X(self, X) -> bool:

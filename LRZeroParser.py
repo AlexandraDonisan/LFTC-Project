@@ -14,7 +14,7 @@ class LRZeroParser:
         self.actions = []   # List<(Action, )>
 
     def step1(self):
-        self.states.append(self.closure({Production('Z', ['.', 'S'])}))
+        self.states.append(self.closure({Production('Z', ['.', 'program'])}))
         for state in self.states:
             for x in self.grammar.nonterminals.union(self.grammar.terminals):
                 result_state = self.goto(state, x)
@@ -51,7 +51,7 @@ class LRZeroParser:
             if production.is_final():  # If dot is at the end
                 state.add_production(production)
             else:
-                non_terminal = production.has_non_terminal()
+                non_terminal = production.has_non_terminal(self.grammar)
                 if non_terminal:  # If dot is before a [A-Z]
                     state.add_production(Production(production.lhs, production.rhs))
                     # add all Productions of grammar having non_terminal in lhs
@@ -80,7 +80,7 @@ class LRZeroParser:
         if len(output_band) == 0:
             output_band_print = 'E'
         else:
-            output_band_print = "".join([str(elem) for elem in output_band[::-1]])
+            output_band_print = ",".join([str(elem) for elem in output_band[::-1]])
         table.add_row(["".join(map(lambda pair: pair[0] + str(pair[1]), work_stack)),
                        "".join(input_stack[::-1]),
                        output_band_print])
@@ -128,5 +128,56 @@ class LRZeroParser:
                 output_band.append(production_number)
             elif self.actions[top_work[1]][0] == Action.ACCEPT:
                 print(table)
+                break
+        return output_band[::-1]
+
+    def step3_pif(self, pif, codification_table):
+        """
+        Parse input and return list of productions used to generate the input sequence
+        :return: output_band: List<Int>
+        """
+        # initialize table
+        table = PrettyTable()
+        table.field_names = ["Work Stack", "Input Stack", "Output Band"]
+        # initialize working, input stacks and output band
+        work_stack = [('$', 0)]     # list of tuple (character from grammar, state number)
+        input_stack = [str(pair[0]) for pair in pif][::-1]     # list of token_code
+        input_stack.insert(0, '$')
+        output_band = []    # list of production numbers
+        while True:
+            self.add_table_row(table, work_stack, input_stack, output_band)
+            top_work = work_stack[-1]
+            if self.actions[top_work[1]][0] == Action.SHIFT:
+                top_input = input_stack[-1]
+                try:
+                    # take value of top_input from codification_table
+                    ct_key = codification_table[int(top_input)]
+                    goto_state = self.goto_dict[(top_work[1], ct_key)]
+                except KeyError:
+                    input_string = "".join(input_stack[::-1])
+                    raise ParseError(f"Error parsing sequence. \n"
+                                     f"Could not find goto({top_work[1]}, {top_input}). \n"
+                                     f"Parser stopped at {input_string}. \n"
+                                     f"Resulting output band is {output_band}")
+                work_stack.append((top_input, goto_state))
+                input_stack = input_stack[:-1]
+            elif self.actions[top_work[1]][0] == Action.REDUCE:
+                production_number = self.actions[top_work[1]][1]
+                production = self.grammar.productions[production_number]
+                work_characters = map(lambda pair: pair[0], work_stack)
+                work_sequence = "".join(work_characters)
+                ct_rhs = [str(codification_table.index(key)) for key in production.rhs]
+                rhs = "".join(ct_rhs)
+                index = work_sequence.index(rhs)
+                # remove tuples matching production
+                work_stack = work_stack[:index]
+                # add tuple matching rhs of production used in reduce
+                goto_lhs = self.goto_dict[(work_stack[-1][1], production.lhs)]
+                work_stack.append((str(codification_table.index(production.lhs)), goto_lhs))
+                output_band.append(production_number)
+            elif self.actions[top_work[1]][0] == Action.ACCEPT:
+                print(table)
+                if len(input_stack) != 1:
+                    raise ParseError("Solution was found before finishing the whole input.")
                 break
         return output_band[::-1]
