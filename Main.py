@@ -18,6 +18,7 @@ def main():
         parser.step1()
         parser.step2()
         parser.step3_pif(pif, codification_table)
+        parser.derivations_string()
     except ParseError as e:
         print(e)
 

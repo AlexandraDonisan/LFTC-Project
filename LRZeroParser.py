@@ -12,6 +12,7 @@ class LRZeroParser:
         self.states = []
         self.goto_dict = {}  # {(state, term) : state}
         self.actions = []   # List<(Action, )>
+        self.derivations = []
 
     def step1(self):
         self.states.append(self.closure({Production('Z', ['.', 'program'])}))
@@ -84,6 +85,19 @@ class LRZeroParser:
         table.add_row(["".join(map(lambda pair: pair[0] + str(pair[1]), work_stack)),
                        "".join(input_stack[::-1]),
                        output_band_print])
+
+    def derivations_string(self):
+        result = " ".join(self.grammar.productions[self.derivations[0]].rhs)
+        result += " => "
+        last = result
+        for derivation in self.derivations[1:]:
+            aux = last
+            new_production = self.grammar.productions[derivation]
+            aux = aux.replace(new_production.lhs, str(" ".join(new_production.rhs)))
+            result += aux
+            last = aux
+        result = result[:-3]
+        print("Derivations string: " + result)
 
     def step3(self):
         """
@@ -172,7 +186,14 @@ class LRZeroParser:
                 # remove tuples matching production
                 work_stack = work_stack[:index]
                 # add tuple matching rhs of production used in reduce
-                goto_lhs = self.goto_dict[(work_stack[-1][1], production.lhs)]
+                try:
+                    goto_lhs = self.goto_dict[(work_stack[-1][1], production.lhs)]
+                except KeyError:
+                    input_string = "".join(input_stack[::-1])
+                    raise ParseError(f"Error parsing sequence. \n"
+                                     f"Could not find goto({top_work[1]}, {top_input}). \n"
+                                     f"Parser stopped at {input_string}. \n"
+                                     f"Resulting output band is {output_band}")
                 work_stack.append((str(codification_table.index(production.lhs)), goto_lhs))
                 output_band.append(production_number)
             elif self.actions[top_work[1]][0] == Action.ACCEPT:
@@ -180,4 +201,5 @@ class LRZeroParser:
                 if len(input_stack) != 1:
                     raise ParseError("Solution was found before finishing the whole input.")
                 break
+        self.derivations = output_band[::-1]
         return output_band[::-1]
