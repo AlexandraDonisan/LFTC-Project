@@ -15,7 +15,7 @@ class LRZeroParser:
         self.derivations = []
 
     def step1(self):
-        self.states.append(self.closure({Production('Z', ['.', 'program'])}))
+        self.states.append(self.closure({Production('Z', ['.', self.grammar.initial_symbol])}))
         for state in self.states:
             for x in self.grammar.nonterminals.union(self.grammar.terminals):
                 result_state = self.goto(state, x)
@@ -143,6 +143,7 @@ class LRZeroParser:
             elif self.actions[top_work[1]][0] == Action.ACCEPT:
                 print(table)
                 break
+        self.derivations = output_band[::-1]
         return output_band[::-1]
 
     def step3_pif(self, pif, codification_table):
